@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Overlay, Icon, Input } from '@rneui/themed';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, DynamicColorIOS } from 'react-native';
+import { View, Text, StyleSheet, FlatList, 
+  TouchableOpacity, DynamicColorIOS } from 'react-native';
 
 function ListMaker1000Final () {
 
@@ -16,6 +17,8 @@ function ListMaker1000Final () {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [inputText, setInputText] = useState('');
   const [priority, setPriority] = useState(1);
+  const [sortType, setSortType] = useState('alpha'); 
+  const [sortDir, setSortDir] = useState('desc');
   const [selectedItem, setSelectedItem] = useState('');
 
   // DATA MODEL FUNCTIONS (CRUD)
@@ -26,20 +29,44 @@ function ListMaker1000Final () {
       key: Date.now()
     }
     let newTodos = todos.concat(newTodo);
-    setTodos(newTodos);
+    sortTodos(sortType, sortDir, newTodos);
   }
 
   const updateTodo = (todo, newText, newPriority) => { 
     let newTodo = { ...todo, text: newText, priority: newPriority };
     let newTodos = todos.map(item=> item.key===todo.key ? newTodo : item);
-    setTodos(newTodos);
+    sortTodos(sortType, sortDir, newTodos);
   }
 
   const deleteTodo = (todo) => {    
     let newTodos = todos.filter((item)=>item.key != todo.key);
-    setTodos(newTodos);
+    sortTodos(sortType, sortDir, newTodos);
   }
   // END DATA MODEL
+
+  const reSort = (sortType, sortDir) => {
+    let newTodos = todos.map(item=>item);
+    sortTodos(sortType, sortDir, newTodos);
+  }
+
+  const sortTodos = (sortType, sotrDir, newTodos) => {
+    if (sortType==='alpha') {
+      if (sotrDir==='desc') {
+        newTodos.sort((a, b)=>a.text > b.text ? 1 : -1);
+      } else {
+        newTodos.sort((a, b)=>b.text > a.text ? 1 : -1);
+      }
+    } else {
+      if (sotrDir==='desc') {
+        newTodos.sort((a, b)=>a.priority - b.priority);
+      } else {
+        newTodos.sort((a, b)=>b.priority - a.priority);
+      }
+    }
+    setSortType(sortType);
+    setSortDir(sotrDir);
+    setTodos(newTodos);
+  }
 
   // CUSTOM COMPONENT FOR DISPLAYING A SINGLE LIST ITEM
   function TodoListItem({item}) {
@@ -59,22 +86,6 @@ function ListMaker1000Final () {
             {item.priority===1 ? '!' : (item.priority===2 ? '!!' : '!!!' )}
           </Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity 
-          style={styles.li2}  
-          onPress={()=>{
-            setSelectedItem(item);
-            setInputText(item.text);
-            setOverlayVisible(true);
-          }}  
-        >
-          <Icon 
-            name="edit"
-            type="font-awesome"
-            color="black"
-            size={25}
-            iconStyle={{ marginRight: 10 }}
-          />
-        </TouchableOpacity> */}
         <TouchableOpacity 
           style={styles.li3}
           onPress={()=>{
@@ -100,6 +111,28 @@ function ListMaker1000Final () {
         <Text style={styles.headerText}>
           ListMaker 1000
         </Text>
+      </View>
+      <View style={styles.subheader}>
+        <Icon 
+          name={sortDir==='asc' ? "sort-alpha-asc" : "sort-alpha-desc"}
+          type="font-awesome"
+          color={sortType==='alpha' ? "black" : 'gray' }
+          size={25}
+          iconStyle={{ marginRight: 10 }}
+          onPress={()=>{
+            reSort('alpha', sortDir==='asc' ? 'desc' : 'asc');
+          }}
+        />
+        <Icon 
+          name={sortDir==='asc' ? "sort-amount-asc" : "sort-amount-desc"}
+          type="font-awesome"
+          color={sortType==='priority' ? "black" : 'gray' }
+          size={25}
+          iconStyle={{ marginRight: 10 }}
+          onPress={()=>{
+            reSort('priority', sortDir==='asc' ? 'desc' : 'asc');
+          }}
+        />
       </View>
       <View style={styles.body}>
         <FlatList
@@ -204,11 +237,17 @@ const styles = StyleSheet.create({
     fontSize: 44,
     color: colors.dark
   },
+  subheader: {
+    flex: 0.05,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center'
+  },
   body: {
     flex: 0.5,
     width: '100%',
     paddingLeft: '5%',
-    paddingTop: '5%'
+    //paddingTop: '5%'
   },
   listItemView: {
     flex: 1,
